@@ -1,0 +1,27 @@
+project_id                            = "your-gcp-project-id"
+billing_account_id                    = "000000-000000-000000"
+dataset_id                            = "gcp_billing_export"
+dataset_location                      = "US"
+budget_display_name                   = "Monthly GCP Budget"
+budget_amount                         = 50000
+budget_currency                       = "JPY"
+budget_thresholds                     = [0.5, 0.9, 1.0]
+cloud_run_service_name                = "google-billing-notifier"
+cloud_run_region                      = "us-central1"
+artifact_registry_repository_id       = "google-billing-notifier"
+container_image_tag                   = "latest"
+pubsub_topic_name                     = "gcp-billing-budget-alerts"
+pubsub_subscription_name              = "gcp-billing-budget-alerts-to-cloud-run"
+scheduler_job_name                    = "gcp-billing-daily-report"
+scheduler_cron                        = "0 9 * * *"
+scheduler_time_zone                   = "Asia/Tokyo"
+cloud_run_runtime_service_account_id  = "billing-notifier-runtime"
+pubsub_push_service_account_id        = "billing-notifier-pubsub"
+scheduler_service_account_id          = "billing-notifier-scheduler"
+line_to                               = "LINE_USER_OR_GROUP_ID"
+line_token_secret_name                = "LINE_TOKEN"
+
+labels = {
+  environment = "dev"
+  managed_by  = "terraform"
+}

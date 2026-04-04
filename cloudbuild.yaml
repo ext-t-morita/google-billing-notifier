@@ -1,0 +1,112 @@
+steps:
+  - id: validate-inputs
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    args:
+      - -lc
+      - |
+        set -euo pipefail
+        check_required() {
+          local name="$1"
+          local value="$2"
+          if [[ -z "${value}" || "${value}" == required-* ]]; then
+            echo "${name} is required" >&2
+            exit 1
+          fi
+        }
+
+        check_required "_PROJECT_ID" "${_PROJECT_ID}"
+        check_required "_BILLING_ACCOUNT_ID" "${_BILLING_ACCOUNT_ID}"
+        check_required "_BUDGET_AMOUNT" "${_BUDGET_AMOUNT}"
+        check_required "_LINE_TO" "${_LINE_TO}"
+        check_required "_TF_STATE_BUCKET" "${_TF_STATE_BUCKET}"
+
+  - id: npm-test
+    name: node:24
+    entrypoint: bash
+    args:
+      - -lc
+      - |
+        set -euo pipefail
+        npm ci
+        npm test
+        npm run build
+
+  - id: docker-build
+    name: gcr.io/cloud-builders/docker
+    entrypoint: bash
+    args:
+      - -lc
+      - |
+        set -euo pipefail
+        image_uri="${_CLOUD_RUN_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REGISTRY_REPOSITORY_ID}/${_CLOUD_RUN_SERVICE_NAME}:${_CONTAINER_IMAGE_TAG}"
+        docker build -t "${image_uri}" .
+
+  - id: docker-push
+    name: gcr.io/cloud-builders/docker
+    entrypoint: bash
+    args:
+      - -lc
+      - |
+        set -euo pipefail
+        image_uri="${_CLOUD_RUN_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REGISTRY_REPOSITORY_ID}/${_CLOUD_RUN_SERVICE_NAME}:${_CONTAINER_IMAGE_TAG}"
+        docker push "${image_uri}"
+
+  - id: terraform-apply
+    name: hashicorp/terraform:1.14.0
+    entrypoint: /bin/sh
+    args:
+      - -c
+      - |
+        set -eu
+        cat > terraform/cloudbuild.auto.tfvars <<EOF
+        project_id                      = "${_PROJECT_ID}"
+        billing_account_id              = "${_BILLING_ACCOUNT_ID}"
+        dataset_id                      = "${_DATASET_ID}"
+        dataset_location                = "${_DATASET_LOCATION}"
+        budget_display_name             = "${_BUDGET_DISPLAY_NAME}"
+        budget_amount                   = ${_BUDGET_AMOUNT}
+        budget_currency                 = "${_BUDGET_CURRENCY}"
+        cloud_run_service_name          = "${_CLOUD_RUN_SERVICE_NAME}"
+        cloud_run_region                = "${_CLOUD_RUN_REGION}"
+        artifact_registry_repository_id = "${_ARTIFACT_REGISTRY_REPOSITORY_ID}"
+        container_image_tag             = "${_CONTAINER_IMAGE_TAG}"
+        pubsub_topic_name               = "${_PUBSUB_TOPIC_NAME}"
+        pubsub_subscription_name        = "${_PUBSUB_SUBSCRIPTION_NAME}"
+        scheduler_job_name              = "${_SCHEDULER_JOB_NAME}"
+        scheduler_cron                  = "${_SCHEDULER_CRON}"
+        scheduler_time_zone             = "${_SCHEDULER_TIME_ZONE}"
+        line_to                         = "${_LINE_TO}"
+        line_token_secret_name          = "${_LINE_TOKEN_SECRET_NAME}"
+        EOF
+
+        terraform -chdir=terraform init -input=false -reconfigure \
+          -backend-config="bucket=${_TF_STATE_BUCKET}" \
+          -backend-config="prefix=${_TF_STATE_PREFIX}"
+        terraform -chdir=terraform validate
+        terraform -chdir=terraform apply -input=false -auto-approve -var-file=cloudbuild.auto.tfvars
+
+images:
+  - '${_CLOUD_RUN_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_ARTIFACT_REGISTRY_REPOSITORY_ID}/${_CLOUD_RUN_SERVICE_NAME}:${_CONTAINER_IMAGE_TAG}'
+
+substitutions:
+  _PROJECT_ID: required-project-id
+  _BILLING_ACCOUNT_ID: required-billing-account-id
+  _DATASET_ID: gcp_billing_export
+  _DATASET_LOCATION: US
+  _BUDGET_DISPLAY_NAME: "Monthly GCP Budget"
+  _BUDGET_AMOUNT: 'required-budget-amount'
+  _BUDGET_CURRENCY: JPY
+  _CLOUD_RUN_REGION: us-central1
+  _ARTIFACT_REGISTRY_REPOSITORY_ID: google-billing-notifier
+  _CLOUD_RUN_SERVICE_NAME: google-billing-notifier
+  _CONTAINER_IMAGE_TAG: latest
+  _PUBSUB_TOPIC_NAME: gcp-billing-budget-alerts
+  _PUBSUB_SUBSCRIPTION_NAME: gcp-billing-budget-alerts-to-cloud-run
+  _SCHEDULER_JOB_NAME: gcp-billing-daily-report
+  _SCHEDULER_CRON: "0 9 * * *"
+  _SCHEDULER_TIME_ZONE: Asia/Tokyo
+  _LINE_TO: required-line-to
+  _LINE_TOKEN_SECRET_NAME: LINE_TOKEN
+  _TF_STATE_BUCKET: required-terraform-state-bucket
+  _TF_STATE_PREFIX: terraform/google-billing-notifier

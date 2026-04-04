@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.DS_Store
+*.swp
+.env
+.env.local
+terraform/.terraform/
+terraform/*.auto.tfvars
+terraform/terraform.tfvars
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+terraform/terraform.tfstate.backup*

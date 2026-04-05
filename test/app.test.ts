@@ -12,7 +12,7 @@ test("buildBillingQuery uses Asia/Tokyo and billing export table suffix", () => 
   const query = buildBillingQuery("example-project", "billing_dataset", "0130F0_876117_CC6CB8");
 
   assert.match(query, /CURRENT_DATE\('Asia\/Tokyo'\)/);
-  assert.match(query, /gcp_billing_export_v1_0130F0_876117_CC6CB8/);
+  assert.match(query, /gcp_billing_export_resource_v1_0130F0_876117_CC6CB8/);
 });
 
 test("parseBudgetAlertEnvelope decodes Pub/Sub payload", () => {
@@ -32,6 +32,24 @@ test("parseBudgetAlertEnvelope decodes Pub/Sub payload", () => {
   });
 
   assert.deepEqual(parsed, payload);
+});
+
+test("parseBudgetAlertEnvelope tolerates missing alert threshold", () => {
+  const payload = {
+    budgetDisplayName: "Monthly GCP Budget",
+    costAmount: 1800,
+    budgetAmount: 3000,
+    currencyCode: "JPY",
+  };
+
+  const encoded = Buffer.from(JSON.stringify(payload), "utf8").toString("base64");
+  const parsed = parseBudgetAlertEnvelope({
+    message: {
+      data: encoded,
+    },
+  });
+
+  assert.equal(parsed.alertThresholdExceeded, 0);
 });
 
 test("buildBudgetAlertMessage marks urgent threshold", () => {

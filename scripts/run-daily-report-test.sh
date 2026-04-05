@@ -8,5 +8,5 @@ SERVICE_NAME="${3:-google-billing-notifier}"
 
 gcloud scheduler jobs run "${JOB_NAME}" --location="${LOCATION}"
 echo "scheduler job triggered: ${JOB_NAME}"
-echo "recent Cloud Run logs:"
-gcloud run services logs read "${SERVICE_NAME}" --region="${LOCATION}" --limit=20
+echo "recent daily report logs:"
+gcloud run services logs read "${SERVICE_NAME}" --region="${LOCATION}" --limit=50 | grep -E '/tasks/daily-report|daily report delivered|request failed' || true

@@ -230,7 +230,7 @@ gcloud auth application-default set-quota-project <project_id>
 - そのため、usage export の有効化は Cloud Billing console で manual に実施してください
 - Billing export の反映には数時間から 24 時間程度の遅延があります
 - Daily Report は export table が作成されるまで成功しません
-- エクスポートテーブル名は通常 `gcp_billing_export_v1_<billing_account_id_with_underscores>` です
+- この実装は `Detailed usage cost` の `gcp_billing_export_resource_v1_<billing_account_id_with_underscores>` を参照します
 - Terraform output の `billing_export_table_name_hint` を確認に使えます
 
 ## Tests
@@ -293,6 +293,8 @@ bash scripts/run-daily-report-test.sh
 - `1`: Scheduler job 名。既定値は `gcp-billing-daily-report`
 - `2`: location。既定値は `us-central1`
 - `3`: Cloud Run service 名。既定値は `google-billing-notifier`
+
+この script は `/tasks/daily-report` に関係する log だけを抜き出します。
 
 確認手順:
 1. `bash scripts/check-billing-export-table.sh <project_id> gcp_billing_export <billing_account_id>`

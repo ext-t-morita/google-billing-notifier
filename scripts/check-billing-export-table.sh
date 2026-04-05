@@ -19,7 +19,7 @@ if [[ -z "${BILLING_ACCOUNT_ID}" ]]; then
 fi
 
 TABLE_SUFFIX="${BILLING_ACCOUNT_ID//-/_}"
-TABLE_ID="gcp_billing_export_v1_${TABLE_SUFFIX}"
+TABLE_ID="gcp_billing_export_resource_v1_${TABLE_SUFFIX}"
 
 echo "checking table: ${PROJECT_ID}:${DATASET_ID}.${TABLE_ID}"
 

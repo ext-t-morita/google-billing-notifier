@@ -24,8 +24,8 @@ output "daily_report_endpoint" {
 }
 
 output "billing_export_table_name_hint" {
-  description = "Expected billing export table name pattern."
-  value       = "gcp_billing_export_v1_${local.billing_export_table_suffix}"
+  description = "Expected detailed billing export table name pattern."
+  value       = "gcp_billing_export_resource_v1_${local.billing_export_table_suffix}"
 }
 
 output "cloud_run_runtime_service_account_email" {

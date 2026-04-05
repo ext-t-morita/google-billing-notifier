@@ -5,7 +5,7 @@ export function buildBillingQuery(projectId: string, datasetId: string, billingA
   SUM(cost) AS total_cost,
   SUM(IF(DATE(usage_start_time) = DATE_SUB(CURRENT_DATE('Asia/Tokyo'), INTERVAL 1 DAY), cost, 0)) AS yesterday_cost
 FROM
-  \`${projectId}.${datasetId}.gcp_billing_export_v1_${billingAccountTableSuffix}\`
+  \`${projectId}.${datasetId}.gcp_billing_export_resource_v1_${billingAccountTableSuffix}\`
 WHERE
   invoice.month = FORMAT_DATE("%Y%m", CURRENT_DATE('Asia/Tokyo'))`;
 }

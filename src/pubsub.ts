@@ -18,12 +18,16 @@ export function parseBudgetAlertEnvelope(body: unknown): BudgetAlertPayload {
 
   const decoded = Buffer.from(encodedPayload, "base64").toString("utf8");
   const parsed = JSON.parse(decoded) as Record<string, unknown>;
+  const alertThresholdExceeded =
+    parsed.alertThresholdExceeded === undefined || parsed.alertThresholdExceeded === null
+      ? 0
+      : asNumber(parsed.alertThresholdExceeded, "alertThresholdExceeded");
 
   return {
     budgetDisplayName: String(parsed.budgetDisplayName ?? "Monthly GCP Budget"),
     costAmount: asNumber(parsed.costAmount, "costAmount"),
     budgetAmount: asNumber(parsed.budgetAmount, "budgetAmount"),
-    alertThresholdExceeded: asNumber(parsed.alertThresholdExceeded, "alertThresholdExceeded"),
+    alertThresholdExceeded,
     currencyCode: String(parsed.currencyCode ?? "JPY"),
   };
 }

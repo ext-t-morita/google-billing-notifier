@@ -8,7 +8,12 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "check:build": "npm run build",
+    "check:smoke": "bash tests/smoke.sh",
+    "check:test": "npm test",
+    "check:terraform": "terraform -chdir=terraform validate",
     "dev": "tsx watch src/index.ts",
+    "prepare": "lefthook install",
     "start": "node dist/src/index.js",
     "test": "node --import tsx --test test/**/*.test.ts"
   },
@@ -17,6 +22,7 @@
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
+    "lefthook": "^2.1.4",
     "tsx": "^4.20.3",
     "typescript": "^5.9.2"
   }

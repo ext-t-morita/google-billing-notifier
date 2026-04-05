@@ -23,7 +23,7 @@
 - `Pub/Sub -> Cloud Run` は OIDC token 付き authenticated push を使います
 - `Cloud Scheduler -> Cloud Run` も OIDC token 付き authenticated HTTP を使います
 - `Cloud Run -> LINE Messaging API` は HTTPS を使います
-- `LINE_TOKEN` は既存の `Secret Manager` secret を再利用します
+- LINE の channel access token は既存の `Secret Manager` secret を再利用します
 - Budget Alert では Pub/Sub 通知に加えて Billing Budget の既定 recipient に email も送られます
 - LINE の Budget Alert は `alertThresholdExceeded > 0` のときだけ送り、定期更新の `0%` 通知は捨てます
 - そのため、公開 webhook を自前で晒す必要はありません
@@ -37,7 +37,7 @@
 - Terraform 実行ユーザーに `Billing Account Administrator`
 - Terraform 実行ユーザーに Cloud Run, Scheduler, Pub/Sub, Artifact Registry, IAM, Secret Manager を扱う権限
 - `Cloud Build` の実行 identity に Terraform apply と backend bucket 参照に必要な権限
-- `LINE_TOKEN` という名前の Secret Manager secret が既に存在すること
+- LINE channel access token を保存した Secret Manager secret が既に存在すること
 - `cloudbuild.googleapis.com`
 - `run.googleapis.com`
 - `billingbudgets.googleapis.com`
@@ -89,7 +89,7 @@ Cloud Run には以下を注入します。
 - `LINE_TO`
 - `LINE_CHANNEL_ACCESS_TOKEN`
 
-`LINE_CHANNEL_ACCESS_TOKEN` は Secret Manager の `LINE_TOKEN` から注入し、secret 自体は Terraform import しません。
+`LINE_CHANNEL_ACCESS_TOKEN` は `line_token_secret_name` で指定した Secret Manager secret から注入し、secret 自体は Terraform import しません。既定値は `LINE_TOKEN` です。
 
 ## Local Shortcuts
 
@@ -273,6 +273,7 @@ gcloud run services logs read google-billing-notifier --region=us-central1 --lim
 ```
 
 成功時は `budget alert delivered` または `daily report delivered` の要約ログが出ます。
+`alertThresholdExceeded=0` で流したテスト payload は `budget alert skipped` になり、LINE は送られません。
 
 Billing export table の確認:
 

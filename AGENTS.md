@@ -9,7 +9,7 @@
 ## Current State
 - `TypeScript` アプリは `src/` にあります
 - Terraform は `terraform/` にあります
-- 既存の `LINE_TOKEN` secret を `Secret Manager` から参照します
+- 既存の LINE token 用 secret を `Secret Manager` から参照します
 - 通常の deploy は `cloudbuild.yaml` 経由で `Cloud Build` から行います
 - Terraform state は `GCS backend` を前提にします
 - Cloud Billing の BigQuery export 有効化だけは Terraform ではなく console 手動です

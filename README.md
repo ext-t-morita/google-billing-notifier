@@ -166,7 +166,7 @@ terraform -chdir=terraform init -migrate-state \
 image URI は次の形式です。
 
 ```text
-us-central1-docker.pkg.dev/<project_id>/<artifact_registry_repository_id>/<cloud_run_service_name>:<container_image_tag>
+us-central1-docker.pkg.dev/<project_id>/<artifact_registry_repository_id>/<cloud_run_service_name>:<build_id>
 ```
 
 `Cloud Build` は次を実行します。
@@ -179,6 +179,8 @@ us-central1-docker.pkg.dev/<project_id>/<artifact_registry_repository_id>/<cloud
 - `terraform init` with `GCS backend`
 - `terraform validate`
 - `terraform apply`
+
+`make deploy` では image tag に `Cloud Build` の `BUILD_ID` を使うため、毎回 Cloud Run の revision が更新されます。
 
 `Makefile` を使う場合:
 

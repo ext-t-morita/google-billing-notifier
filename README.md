@@ -244,6 +244,20 @@ bash tests/smoke.sh
 cd terraform && terraform validate
 ```
 
+## Git Hooks
+
+`lefthook` を `package.json` 管理で入れています。
+
+- `pre-commit`: `npm run check:smoke`
+- `pre-push`: `npm run check:test`, `npm run check:build`, `npm run check:terraform`
+
+初回セットアップでは `npm install` 時の `prepare` で hook が入ります。必要なら手動でも再インストールできます。
+
+```bash
+npm install
+npm run prepare
+```
+
 ## Manual Checks
 
 Budget Alert の手動テスト:

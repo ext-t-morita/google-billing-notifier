@@ -1,0 +1,13 @@
+pre-commit:
+  commands:
+    smoke:
+      run: npm run check:smoke
+
+pre-push:
+  commands:
+    test:
+      run: npm run check:test
+    build:
+      run: npm run check:build
+    terraform:
+      run: npm run check:terraform

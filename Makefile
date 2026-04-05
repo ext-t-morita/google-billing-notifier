@@ -15,7 +15,6 @@ BUDGET_CURRENCY ?= JPY
 CLOUD_RUN_REGION ?= us-central1
 ARTIFACT_REGISTRY_REPOSITORY_ID ?= google-billing-notifier
 CLOUD_RUN_SERVICE_NAME ?= google-billing-notifier
-CONTAINER_IMAGE_TAG ?= latest
 PUBSUB_TOPIC_NAME ?= gcp-billing-budget-alerts
 PUBSUB_SUBSCRIPTION_NAME ?= gcp-billing-budget-alerts-to-cloud-run
 SCHEDULER_JOB_NAME ?= gcp-billing-daily-report
@@ -26,10 +25,9 @@ LINE_TOKEN_SECRET_NAME ?= LINE_TOKEN
 TF_STATE_BUCKET ?=
 TF_STATE_PREFIX ?= terraform/google-billing-notifier
 
-IMAGE_URI := $(CLOUD_RUN_REGION)-docker.pkg.dev/$(PROJECT_ID)/$(ARTIFACT_REGISTRY_REPOSITORY_ID)/$(CLOUD_RUN_SERVICE_NAME):$(CONTAINER_IMAGE_TAG)
 TF_BACKEND_FLAGS := -backend-config=bucket=$(TF_STATE_BUCKET) -backend-config=prefix=$(TF_STATE_PREFIX)
 
-.PHONY: alert-test table-check daily-test test build push-image deploy tf-init tf-plan tf-apply
+.PHONY: alert-test table-check daily-test test build deploy tf-init tf-plan tf-apply
 
 define require_env
 	@if [[ -z "$($1)" ]]; then \
@@ -59,14 +57,6 @@ test:
 
 build:
 	npm run build
-
-push-image:
-	$(call require_env,PROJECT_ID)
-	$(call require_env,CLOUD_RUN_REGION)
-	$(call require_env,ARTIFACT_REGISTRY_REPOSITORY_ID)
-	$(call require_env,CLOUD_RUN_SERVICE_NAME)
-	$(call require_env,CONTAINER_IMAGE_TAG)
-	gcloud builds submit --tag "$(IMAGE_URI)"
 
 deploy:
 	$(call require_env,PROJECT_ID)

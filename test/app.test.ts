@@ -172,6 +172,112 @@ test("handleRequest logs budget alert summary on success", async () => {
   });
 });
 
+test("handleRequest skips budget alerts without threshold crossing", async () => {
+  const logs: unknown[][] = [];
+  let fetchCallCount = 0;
+  const logger = {
+    info: (...args: unknown[]) => logs.push(args),
+    error: (...args: unknown[]) => logs.push(args),
+  };
+
+  const request = createRequest("POST", "/pubsub/budget-alert", {
+    message: {
+      data: Buffer.from(
+        JSON.stringify({
+          budgetDisplayName: "Monthly GCP Budget",
+          costAmount: 210,
+          budgetAmount: 3000,
+          alertThresholdExceeded: 0,
+          currencyCode: "JPY",
+        }),
+        "utf8",
+      ).toString("base64"),
+    },
+  });
+  const response = createResponse();
+
+  await handleRequest(request, response.response, {
+    config: {
+      port: 8080,
+      projectId: "example-project",
+      billingDatasetId: "gcp_billing_export",
+      billingAccountTableSuffix: "0130F0_876117_CC6CB8",
+      lineTo: "group-id",
+      lineChannelAccessToken: "token",
+    },
+    bigQueryClient: {
+      query: async () => [[{}]],
+    },
+    fetchImpl: async () => {
+      fetchCallCount += 1;
+      return {
+        ok: true,
+        status: 200,
+        text: async () => "",
+      };
+    },
+    logger,
+  });
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(fetchCallCount, 0);
+  assert.equal(logs.length, 1);
+  const firstLog = logs[0];
+  assert.ok(firstLog);
+  assert.equal(firstLog[0], "budget alert skipped");
+  assert.deepEqual(firstLog[1], {
+    path: "/pubsub/budget-alert",
+    budgetDisplayName: "Monthly GCP Budget",
+    thresholdPercent: 0,
+    costAmount: 210,
+    budgetAmount: 3000,
+  });
+});
+
+test("handleRequest still delivers budget alerts at 50% threshold", async () => {
+  let fetchCallCount = 0;
+  const request = createRequest("POST", "/pubsub/budget-alert", {
+    message: {
+      data: Buffer.from(
+        JSON.stringify({
+          budgetDisplayName: "Monthly GCP Budget",
+          costAmount: 1500,
+          budgetAmount: 3000,
+          alertThresholdExceeded: 0.5,
+          currencyCode: "JPY",
+        }),
+        "utf8",
+      ).toString("base64"),
+    },
+  });
+  const response = createResponse();
+
+  await handleRequest(request, response.response, {
+    config: {
+      port: 8080,
+      projectId: "example-project",
+      billingDatasetId: "gcp_billing_export",
+      billingAccountTableSuffix: "0130F0_876117_CC6CB8",
+      lineTo: "group-id",
+      lineChannelAccessToken: "token",
+    },
+    bigQueryClient: {
+      query: async () => [[{}]],
+    },
+    fetchImpl: async () => {
+      fetchCallCount += 1;
+      return {
+        ok: true,
+        status: 200,
+        text: async () => "",
+      };
+    },
+  });
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(fetchCallCount, 1);
+});
+
 test("handleRequest logs daily report summary on success", async () => {
   const logs: unknown[][] = [];
   const logger = {

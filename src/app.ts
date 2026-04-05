@@ -32,6 +32,25 @@ function writeJson(response: ServerResponse, statusCode: number, body: Record<st
   response.end(JSON.stringify(body));
 }
 
+async function deliverLineMessage(
+  response: ServerResponse,
+  dependencies: AppDependencies,
+  logger: Pick<Console, "info">,
+  message: string,
+  successLabel: string,
+  successContext: Record<string, unknown>,
+): Promise<void> {
+  await pushLineMessage(
+    dependencies.fetchImpl,
+    dependencies.config.lineChannelAccessToken,
+    dependencies.config.lineTo,
+    message,
+  );
+
+  logger.info(successLabel, successContext);
+  writeJson(response, 200, { ok: true });
+}
+
 export async function handleRequest(
   request: IncomingMessage,
   response: ServerResponse,
@@ -48,24 +67,36 @@ export async function handleRequest(
     if (request.method === "POST" && request.url === "/pubsub/budget-alert") {
       const body = await readJsonBody(request);
       const payload = parseBudgetAlertEnvelope(body);
+      const thresholdPercent = Math.round(payload.alertThresholdExceeded * 100);
+
+      if (payload.alertThresholdExceeded <= 0) {
+        logger.info("budget alert skipped", {
+          path: request.url,
+          budgetDisplayName: payload.budgetDisplayName,
+          thresholdPercent,
+          costAmount: payload.costAmount,
+          budgetAmount: payload.budgetAmount,
+        });
+        writeJson(response, 200, { ok: true, skipped: true });
+        return;
+      }
+
       const message = buildBudgetAlertMessage(payload);
 
-      await pushLineMessage(
-        dependencies.fetchImpl,
-        dependencies.config.lineChannelAccessToken,
-        dependencies.config.lineTo,
+      await deliverLineMessage(
+        response,
+        dependencies,
+        logger,
         message,
-      );
-
-      logger.info("budget alert delivered", {
+        "budget alert delivered",
+        {
         path: request.url,
         budgetDisplayName: payload.budgetDisplayName,
-        thresholdPercent: Math.round(payload.alertThresholdExceeded * 100),
+        thresholdPercent,
         costAmount: payload.costAmount,
         budgetAmount: payload.budgetAmount,
-      });
-
-      writeJson(response, 200, { ok: true });
+        },
+      );
       return;
     }
 
@@ -78,20 +109,18 @@ export async function handleRequest(
       );
       const message = buildDailyReportMessage(summary);
 
-      await pushLineMessage(
-        dependencies.fetchImpl,
-        dependencies.config.lineChannelAccessToken,
-        dependencies.config.lineTo,
+      await deliverLineMessage(
+        response,
+        dependencies,
+        logger,
         message,
-      );
-
-      logger.info("daily report delivered", {
+        "daily report delivered",
+        {
         path: request.url,
         totalCost: summary.totalCost,
         yesterdayCost: summary.yesterdayCost,
-      });
-
-      writeJson(response, 200, { ok: true });
+        },
+      );
       return;
     }
 

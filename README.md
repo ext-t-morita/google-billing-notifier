@@ -25,6 +25,7 @@
 - `Cloud Run -> LINE Messaging API` は HTTPS を使います
 - `LINE_TOKEN` は既存の `Secret Manager` secret を再利用します
 - Budget Alert では Pub/Sub 通知に加えて Billing Budget の既定 recipient に email も送られます
+- LINE の Budget Alert は `alertThresholdExceeded > 0` のときだけ送り、定期更新の `0%` 通知は捨てます
 - そのため、公開 webhook を自前で晒す必要はありません
 
 ## Prerequisites
@@ -110,7 +111,6 @@ cp .env.local.example .env.local
 - `CLOUD_RUN_REGION`
 - `ARTIFACT_REGISTRY_REPOSITORY_ID`
 - `CLOUD_RUN_SERVICE_NAME`
-- `CONTAINER_IMAGE_TAG`
 - `PUBSUB_TOPIC_NAME`
 - `PUBSUB_SUBSCRIPTION_NAME`
 - `SCHEDULER_JOB_NAME`

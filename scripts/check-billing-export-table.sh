@@ -8,7 +8,7 @@ BILLING_ACCOUNT_ID="${3:-}"
 
 if [[ -z "${PROJECT_ID}" ]]; then
   echo "project_id is required" >&2
-  echo "usage: bash scripts/check-billing-export-table.sh <project_id> [dataset_id] [billing_account_id]" >&2
+  echo "usage: bash scripts/check-billing-export-table.sh <project_id> [dataset_id] <billing_account_id>" >&2
   exit 1
 fi
 

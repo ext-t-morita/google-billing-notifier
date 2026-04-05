@@ -57,6 +57,7 @@
 - BigQuery dataset location は `US`
 - Cloud Run / Scheduler / Artifact Registry は `us-central1`
 - Budget Alert は LINE と email の両方を通知します
+- LINE の Budget Alert は `alertThresholdExceeded > 0` のときだけ送ります
 
 ## Local Workflow
 - 公開 repo には実値を含めません
